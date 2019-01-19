@@ -5,39 +5,26 @@ package trabajo.parte2.dominio;
  */
 public class Tablero {
     // Variables de la clase
-    private Estado casillas[][];
-    private int numCochesAnteriores[][];
+    private Casilla casillas[][];
 
 
     // Constructor de la clase
     public Tablero(int n, int m) {
-        casillas = new Estado[n][m];
-        numCochesAnteriores = new int[n][m];
+        casillas = new Casilla[n][m];
         for(int i=0; i<n; i++) {
             for(int j=0; j<m; j++) {
-                casillas[i][j] = Estado.LIBRE;
-                numCochesAnteriores[i][j] = 0;
+                casillas[i][j] = new Casilla(Estado.LIBRE, 0);
             }
         }
     }
 
-    // Devuelve el estado de una casilla
-    public Estado obtenerEstadoCasilla(int n, int m) {
-        return casillas[n][m];
+    // Obtener el contenido de una casilla
+    public Casilla getCasilla(int fila, int columna) {
+        return casillas[fila][columna];
     }
 
-    // Modifica el estado de una casilla
-    public void modificarEstadoCasilla(int n, int m, Estado e) {
-        casillas[n][m] = e;
-    }
-
-    // Obtiene el número de coches que han pasado por una casilla
-    public int obtenerCochesCasilla(int n, int m) {
-        return numCochesAnteriores[n][m];
-    }
-
-    // Modifica el número de taxis que han pasado por una casilla
-    public void modificarCochesCasilla(int n, int m, int nuevaCantidad) {
-        numCochesAnteriores[n][m] = nuevaCantidad;
+    // Modificar una casilla
+    public void setCasilla(int fila, int columna, Casilla c) {
+        casillas[fila][columna] = c;
     }
 }

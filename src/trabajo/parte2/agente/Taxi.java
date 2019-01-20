@@ -1,8 +1,10 @@
 package trabajo.parte2.agente;
 
-public class Taxi {
+import jade.core.Agent;
+
+public class Taxi extends Agent {
     @Override
-    void setup() {
+    public void setup() {
 
     }
 }

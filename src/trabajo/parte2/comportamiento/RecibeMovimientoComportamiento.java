@@ -1,5 +1,6 @@
 package trabajo.parte2.comportamiento;
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.RefuseException;
@@ -8,23 +9,26 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 import trabajo.parte2.agente.GestorTablero;
+import trabajo.parte2.dominio.Casilla;
+import trabajo.parte2.dominio.Posicion;
+
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
-// Comportarmiento del GestorTablero ante una petición de una casilla.
-// Devuelve el contenido de una casilla
-public class RecibeConsultaComportamiento extends AchieveREResponder {
+// Comportarmiento del GestorTablero ante una solicitud de movimiento.
+// Devuelve si se permite el movimiento o no
+public class RecibeMovimientoComportamiento extends AchieveREResponder {
     // Constructor de la clase
-    public RecibeConsultaComportamiento(Agent a) {
+    public RecibeMovimientoComportamiento(Agent a) {
         super(a, MessageTemplate.and(MessageTemplate.MatchProtocol(
-                FIPANames.InteractionProtocol.FIPA_QUERY),
-                MessageTemplate.MatchPerformative(ACLMessage.QUERY_REF)));
+                FIPANames.InteractionProtocol.FIPA_PROPOSE),
+                MessageTemplate.MatchPerformative(ACLMessage.PROPOSE)));
     }
 
     /*
      * Pre:  ---
-     * Post: Este método se ejecuta al recibir una petición de un taxi
+     * Post: Este método se ejecuta al recibir una solicitud de movimiento de un taxi
      */
     @Override
     protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
@@ -32,12 +36,21 @@ public class RecibeConsultaComportamiento extends AchieveREResponder {
             StringTokenizer st = new StringTokenizer(request.getContent());
             int fila = Integer.parseInt(st.nextToken());
             int columna = Integer.parseInt(st.nextToken());
+            AID taxi = request.getSender();
+
             ACLMessage inform = request.createReply();
-            inform.setPerformative(ACLMessage.INFORM_REF);
-            inform.setContentObject(((GestorTablero)myAgent).getTablero().getCasilla(fila, columna));
+            inform.setPerformative(ACLMessage.REJECT_PROPOSAL);
+
+            if(Posicion.esAlcanzable(
+                    ((GestorTablero)myAgent).getTablero().getTaxis().get(taxi),
+                    new Posicion(fila,columna)))
+            {
+                inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+            }
+
             return inform;
         }
-        catch(NoSuchElementException | NumberFormatException | IOException e) {
+        catch(NoSuchElementException | NumberFormatException e) {
             throw new NotUnderstoodException("El formato del mensaje es incorrecto");
         }
         catch(IndexOutOfBoundsException e) {

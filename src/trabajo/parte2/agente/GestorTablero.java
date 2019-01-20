@@ -2,11 +2,18 @@ package trabajo.parte2.agente;
 
 import jade.core.Agent;
 import trabajo.parte2.comportamiento.RecibeConsultaComportamiento;
+import trabajo.parte2.comportamiento.RecibeMovimientoComportamiento;
 import trabajo.parte2.dominio.Tablero;
 
 public class GestorTablero extends Agent {
+
+    private Tablero tablero;
     @Override
     public void setup() {
-        addBehaviour(new RecibeConsultaComportamiento(this, new Tablero(10, 10)));
+        //TODO: crear tablero
+        addBehaviour(new RecibeConsultaComportamiento(this));
+        addBehaviour(new RecibeMovimientoComportamiento(this));
     }
+
+    public Tablero getTablero(){return tablero;}
 }

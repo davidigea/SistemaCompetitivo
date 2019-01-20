@@ -62,7 +62,7 @@ public class RecibeConsultaComportamiento extends AchieveREResponder {
             int fila = Integer.parseInt(st.nextToken());
             int columna = Integer.parseInt(st.nextToken());
             ACLMessage inform = request.createReply();
-            inform.setPerformative(ACLMessage.INFORM);
+            inform.setPerformative(ACLMessage.INFORM_REF);
             inform.setContentObject(t.getCasilla(fila, columna));
             return inform;
         }

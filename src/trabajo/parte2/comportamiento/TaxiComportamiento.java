@@ -16,6 +16,7 @@ public class TaxiComportamiento extends Behaviour {
     private static double PENALIZACION_POR_PASO = 0.02;
     private static int VALOR_PERSONA = 1;
     private static int VALOR_MURO = -1;
+    private static int VALOR_COCHE = -1;
     int fila, columna;
     AID receptor;
 
@@ -29,7 +30,8 @@ public class TaxiComportamiento extends Behaviour {
     // Se encarga de enviar los mensajes de petición de las casillas adyacentes
     @Override
     public void action() {
-        // TODO
+        Casilla c = pedirCasilla(0,0);
+        System.out.println("El valor es " + c.getE().toString());
     }
 
     // Calcula la función de utilidad para una casilla
@@ -43,7 +45,10 @@ public class TaxiComportamiento extends Behaviour {
         else if(c.getE() == Estado.PERSONA) {
             return VALOR_PERSONA;
         }
-        else { // Persona o coche
+        else if(c.getE() == Estado.COCHE) {
+            return VALOR_COCHE;
+        }
+        else { // Persona
             // Hacermos la recursividad
             double[] resultados = new double[8];
             int cont = 0;
@@ -61,12 +66,7 @@ public class TaxiComportamiento extends Behaviour {
                     max = resultados[k];
                 }
             }
-            if(c.getE() == Estado.LIBRE) {
-                return max;
-            }
-            else {
-                return max - 1/(2*c.getNumCochesPasados());
-            }
+            return max - 1/(2*c.getNumCochesPasados());
         }
     }
 
@@ -83,24 +83,16 @@ public class TaxiComportamiento extends Behaviour {
 
         // Miramos la respuesta
         switch (m.getPerformative()) {
-            case ACLMessage.AGREE:
-                // En el caso de agree habra otra respuesta
-                m = this.myAgent.blockingReceive(MessageTemplate.MatchProtocol(
-                        FIPANames.InteractionProtocol.FIPA_QUERY));
-                switch(m.getPerformative()) {
-                    case ACLMessage.INFORM_REF:
-                        try {
-                            return (Casilla) m.getContentObject();
-                        }
-                        catch(UnreadableException e) {
-                            throw new RuntimeException("Fallo al deserializar el objeto");
-                        }
-                    case ACLMessage.FAILURE: throw new RuntimeException("Fallo en el emisor");
-                    default: throw new RuntimeException("Performativa no esperada");
+            case ACLMessage.INFORM_REF:
+                try {
+                    return (Casilla) m.getContentObject();
+                }
+                catch(UnreadableException e) {
+                    throw new RuntimeException("Fallo al deserializar el objeto");
                 }
             case ACLMessage.REFUSE: return new Casilla(Estado.MURO, 0);
             case ACLMessage.NOT_UNDERSTOOD: throw new RuntimeException("Mensaje enviado incorrecto");
-            default: throw new RuntimeException("Performativa no esperada (agree)");
+            default: throw new RuntimeException("Performativa no esperada");
         }
     }
 

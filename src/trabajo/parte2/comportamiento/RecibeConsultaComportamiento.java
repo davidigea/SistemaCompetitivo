@@ -37,37 +37,16 @@ public class RecibeConsultaComportamiento extends AchieveREResponder {
             StringTokenizer st = new StringTokenizer(request.getContent());
             int fila = Integer.parseInt(st.nextToken());
             int columna = Integer.parseInt(st.nextToken());
-            t.getCasilla(fila, columna); // Comprobar si la casilla existe
-            ACLMessage agree = request.createReply();
-            agree.setPerformative(ACLMessage.AGREE);
-            return agree;
-        }
-        catch(NoSuchElementException | NumberFormatException e) {
-            throw new NotUnderstoodException("El formato del mensaje es incorrecto");
-        }
-        catch(IndexOutOfBoundsException e) {
-            throw new RefuseException("La casilla no existe");
-        }
-    }
-
-    /*
-     * Pre:  ---
-     * Post: Este método se ejecuta después del handleRequest si este respondió
-     *       con un agree
-     */
-    @Override
-    protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
-        try {
-            StringTokenizer st = new StringTokenizer(request.getContent());
-            int fila = Integer.parseInt(st.nextToken());
-            int columna = Integer.parseInt(st.nextToken());
             ACLMessage inform = request.createReply();
             inform.setPerformative(ACLMessage.INFORM_REF);
             inform.setContentObject(t.getCasilla(fila, columna));
             return inform;
         }
-        catch(IOException e) {
-            throw new FailureException("Error al crear el contenido del mensaje");
+        catch(NoSuchElementException | NumberFormatException | IOException e) {
+            throw new NotUnderstoodException("El formato del mensaje es incorrecto");
+        }
+        catch(IndexOutOfBoundsException e) {
+            throw new RefuseException("La casilla no existe");
         }
     }
 }

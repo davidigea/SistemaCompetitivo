@@ -41,5 +41,7 @@ public class Tablero {
     // Establecer posicion de un taxi
     public void moverTaxi(AID taxi, Posicion posicion) {
         this.taxis.put(taxi,posicion);
+        int numCochesPasados = casillas[posicion.getFila()][posicion.getColumna()].getNumCochesPasados();
+        casillas[posicion.getFila()][posicion.getColumna()].setNumCochesPasados(numCochesPasados+1);
     }
 }

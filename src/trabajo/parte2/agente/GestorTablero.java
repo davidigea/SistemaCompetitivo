@@ -1,10 +1,12 @@
 package trabajo.parte2.agente;
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import trabajo.parte2.comportamiento.RecibeConsultaComportamiento;
 import trabajo.parte2.comportamiento.RecibeMovimientoComportamiento;
+import trabajo.parte2.dominio.Posicion;
 import trabajo.parte2.dominio.Tablero;
 
 public class GestorTablero extends Agent {
@@ -24,12 +26,18 @@ public class GestorTablero extends Agent {
             ac = cc.createNewAgent("Paco", "trabajo.parte2.agente.Taxi", argumentos);
             ac.start();
         }
-        catch (Exception e) {}
+        catch (Exception e) {
+            e.printStackTrace();
+        }
         addBehaviour(new RecibeConsultaComportamiento(this));
         addBehaviour(new RecibeMovimientoComportamiento(this));
     }
 
     public Tablero getTablero(){return tablero;}
+
+    public void moverTaxi(AID taxi, Posicion posicion){
+        tablero.moverTaxi(taxi,posicion);
+    }
 
     // Crea un tablero aleatorio
     // También lanza todos los agentes Taxi

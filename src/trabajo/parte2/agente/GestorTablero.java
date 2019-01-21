@@ -18,7 +18,7 @@ public class GestorTablero extends Agent {
     public void setup() {
         //TODO: crear tablero
         tablero = new Tablero(10, 10);
-        tablero.setCasilla(0,1, new Casilla(Estado.PERSONA, 0, 0, 1));
+        tablero.setCasilla(0,3, Estado.PERSONA, 0);
         ContainerController cc = getContainerController();
         AgentController ac;
         Object[] argumentos = new Object[3];

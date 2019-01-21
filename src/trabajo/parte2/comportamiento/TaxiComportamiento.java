@@ -9,7 +9,6 @@ import trabajo.parte2.agente.Taxi;
 import trabajo.parte2.dominio.Casilla;
 import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Tablero;
-import java.util.HashMap;
 import java.util.HashSet;
 
 // Comportamiento de un Taxi cuando quiere pedir una casilla
@@ -79,32 +78,40 @@ public class TaxiComportamiento extends Behaviour {
                 try { // Casilla norte
                     aux = t.getCasilla(c.getFila()-1,c.getColumna());
                     if(!yaCalculadas.contains(aux)) {
+                        double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
                         valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                                valoresUtilidad[c.getFila()][c.getColumna()] - PENALIZACION_POR_PASO;
+                                valoresUtilidad[c.getFila()][c.getColumna()]
+                                        - PENALIZACION_POR_PASO - penalizacion;
                         anyadirValores(aux, yaCalculadas, nuevos);
                     }
                 } catch(IndexOutOfBoundsException e) {}
                 try { // Casilla sur
                     aux = t.getCasilla(c.getFila()+1,c.getColumna());
                     if(!yaCalculadas.contains(aux)) {
+                        double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
                         valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                                valoresUtilidad[c.getFila()][c.getColumna()] - PENALIZACION_POR_PASO;
+                                valoresUtilidad[c.getFila()][c.getColumna()]
+                                        - PENALIZACION_POR_PASO - penalizacion;
                         anyadirValores(aux, yaCalculadas, nuevos);
                     }
                 } catch(IndexOutOfBoundsException e) {}
                 try { // Casilla este
                     aux = t.getCasilla(c.getFila(),c.getColumna()+1);
                     if(!yaCalculadas.contains(aux)) {
+                        double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
                         valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                                valoresUtilidad[c.getFila()][c.getColumna()] - PENALIZACION_POR_PASO;
+                                valoresUtilidad[c.getFila()][c.getColumna()]
+                                        - PENALIZACION_POR_PASO - penalizacion;
                         anyadirValores(aux, yaCalculadas, nuevos);
                     }
                 } catch(IndexOutOfBoundsException e) {}
                 try { // Casilla oeste
                     aux = t.getCasilla(c.getFila(),c.getColumna()-1);
                     if(!yaCalculadas.contains(aux)) {
+                        double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
                         valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                                valoresUtilidad[c.getFila()][c.getColumna()] - PENALIZACION_POR_PASO;
+                                valoresUtilidad[c.getFila()][c.getColumna()]
+                                        - PENALIZACION_POR_PASO - penalizacion;
                         anyadirValores(aux, yaCalculadas, nuevos);
                     }
                 } catch(IndexOutOfBoundsException e) {}

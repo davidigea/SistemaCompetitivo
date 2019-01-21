@@ -41,6 +41,14 @@ public class Tablero implements Serializable {
         casillas[fila][columna] = c;
     }
 
+    // Modificar una casilla
+    public void setCasilla(int fila, int columna, Estado e, int numCoches) {
+        Casilla c = casillas[fila][columna];
+        c.setE(e);
+        c.setNumCochesPasados(numCoches);
+        casillas[fila][columna] = c;
+    }
+
     // Obtener posiciones de taxis
     public HashMap<AID, Posicion> getTaxis() {
         return taxis;

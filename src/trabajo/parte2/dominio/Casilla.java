@@ -4,13 +4,14 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class Casilla implements Serializable {
-    private static final long serialVersionUID = 42L;
     private Estado e;
-    private int numCochesPasados;
+    private int numCochesPasados, fila, columna;
 
-    public Casilla(Estado e, int numCochesPasados) {
+    public Casilla(Estado e, int numCochesPasados, int fila, int columna) {
         this.e = e;
         this.numCochesPasados = numCochesPasados;
+        this.fila = fila;
+        this.columna = columna;
     }
 
     public Estado getE() {
@@ -29,18 +30,20 @@ public class Casilla implements Serializable {
         this.numCochesPasados = numCochesPasados;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Casilla casilla = (Casilla) o;
-        return numCochesPasados == casilla.numCochesPasados &&
-                e == casilla.e;
+    public int getFila() {
+        return fila;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(e, numCochesPasados);
+    public void setFila(int fila) {
+        this.fila = fila;
+    }
+
+    public int getColumna() {
+        return columna;
+    }
+
+    public void setColumna(int columna) {
+        this.columna = columna;
     }
 
     @Override
@@ -48,6 +51,24 @@ public class Casilla implements Serializable {
         return "Casilla{" +
                 "e=" + e +
                 ", numCochesPasados=" + numCochesPasados +
+                ", fila=" + fila +
+                ", columna=" + columna +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Casilla casilla = (Casilla) o;
+        return numCochesPasados == casilla.numCochesPasados &&
+                fila == casilla.fila &&
+                columna == casilla.columna &&
+                e == casilla.e;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(e, numCochesPasados, fila, columna);
     }
 }

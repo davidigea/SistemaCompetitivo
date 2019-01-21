@@ -27,21 +27,15 @@ public class RecibeConsultaComportamiento extends AchieveREResponder {
      * Post: Este método se ejecuta al recibir una petición de un taxi
      */
     @Override
-    protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
+    protected ACLMessage handleRequest(ACLMessage request) throws RefuseException {
         try {
-            StringTokenizer st = new StringTokenizer(request.getContent());
-            int fila = Integer.parseInt(st.nextToken());
-            int columna = Integer.parseInt(st.nextToken());
             ACLMessage inform = request.createReply();
             inform.setPerformative(ACLMessage.INFORM_REF);
-            inform.setContentObject(((GestorTablero)myAgent).getTablero().getCasilla(fila, columna));
+            inform.setContentObject(((GestorTablero)myAgent).getTablero());
             return inform;
         }
-        catch(NoSuchElementException | NumberFormatException | IOException e) {
-            throw new NotUnderstoodException("El formato del mensaje es incorrecto");
-        }
-        catch(IndexOutOfBoundsException e) {
-            throw new RefuseException("La casilla no existe");
+        catch(IOException e) {
+            throw new RefuseException("Error al serializar el tablero");
         }
     }
 }

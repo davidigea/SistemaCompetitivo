@@ -1,11 +1,11 @@
 package trabajo.parte2.comportamiento;
 
-import jade.core.AID;
 import jade.core.behaviours.Behaviour;
 import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
+import trabajo.parte2.agente.Taxi;
 import trabajo.parte2.dominio.Casilla;
 import trabajo.parte2.dominio.Estado;
 
@@ -17,56 +17,41 @@ public class TaxiComportamiento extends Behaviour {
     private static int VALOR_PERSONA = 1;
     private static int VALOR_MURO = -1;
     private static int VALOR_COCHE = -1;
-    int fila, columna;
-    AID receptor;
-
-    // Constructor
-    public TaxiComportamiento(int fila, int columna, AID receptor) {
-        this.fila = fila;
-        this.columna = columna;
-        this.receptor = receptor;
-    }
 
     // Se encarga de enviar los mensajes de petición de las casillas adyacentes
     @Override
     public void action() {
-        Casilla c = pedirCasilla(0,0);
-        System.out.println("El valor es " + c.getE().toString());
+        Casilla c = pedirCasilla(0,0); System.out.println(c);
+        c = pedirCasilla(-1,-1); System.out.println(c);
     }
 
     // Calcula la función de utilidad para una casilla
     // Tiene un coste exponencial, puede modificarse para lograr un coste
     // lineal en el número de casillas
-    double funcionUtilidad(int i, int j) {
-        Casilla c = pedirCasilla(i, j);
-        if(c.getE() == Estado.MURO) {
-            return VALOR_MURO;
-        }
-        else if(c.getE() == Estado.PERSONA) {
-            return VALOR_PERSONA;
-        }
-        else if(c.getE() == Estado.COCHE) {
-            return VALOR_COCHE;
-        }
-        else { // Persona
-            // Hacermos la recursividad
-            double[] resultados = new double[8];
-            int cont = 0;
-            for(int k=i-1; k<i+2; k++) {
-                for(int m=j-1; m<j+2; m++) {
-                    if(k!=i && m!=j) {
-                        resultados[cont] = funcionUtilidad(k,m) - PENALIZACION_POR_PASO;
-                        cont++;
+    private double funcionUtilidad(int i, int j) {
+        Casilla c = pedirCasilla(i,j);
+        switch(c.getE()) {
+            case MURO: return VALOR_MURO;
+            case PERSONA: return VALOR_PERSONA;
+            case COCHE: return VALOR_COCHE;
+            default: // Casilla libre
+                double[] resultados = new double[8];
+                int cont = 0;
+                for(int k=i-1; k<i+2; k++) {
+                    for(int m=j-1; m<j+2; m++) {
+                        if(k!=i && m!=j) {
+                            resultados[cont] = funcionUtilidad(k,m) - PENALIZACION_POR_PASO;
+                            cont++;
+                        }
                     }
                 }
-            }
-            double max = resultados[0];
-            for(int k=0; k<8; k++) {
-                if(resultados[k]>max) {
-                    max = resultados[k];
+                double max = resultados[0];
+                for(int k=1; k<8; k++) {
+                    if(resultados[k]>max) {
+                        max = resultados[k];
+                    }
                 }
-            }
-            return max - 1/(2*c.getNumCochesPasados());
+                return max - 1/(2*c.getNumCochesPasados());
         }
     }
 
@@ -75,7 +60,7 @@ public class TaxiComportamiento extends Behaviour {
         // Enviamos el mensaje al GestorTablero
         ACLMessage m = new ACLMessage(ACLMessage.QUERY_REF);
         m.setProtocol(FIPANames.InteractionProtocol.FIPA_QUERY);
-        m.addReceiver(receptor);
+        m.addReceiver(((Taxi)this.myAgent).getGestorTablero());
         m.setContent(String.valueOf(i) + "\n" + String.valueOf(j));
         this.myAgent.send(m);
         m = this.myAgent.blockingReceive(MessageTemplate.MatchProtocol(

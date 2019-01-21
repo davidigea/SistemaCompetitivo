@@ -42,4 +42,12 @@ public class Casilla implements Serializable {
     public int hashCode() {
         return Objects.hash(e, numCochesPasados);
     }
+
+    @Override
+    public String toString() {
+        return "Casilla{" +
+                "e=" + e +
+                ", numCochesPasados=" + numCochesPasados +
+                '}';
+    }
 }

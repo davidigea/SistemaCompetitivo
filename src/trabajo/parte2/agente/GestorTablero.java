@@ -27,6 +27,7 @@ public class GestorTablero extends Agent {
         argumentos[2] = this.getAID();
         try {
             ac = cc.createNewAgent("Paco", "trabajo.parte2.agente.Taxi", argumentos);
+            tablero.moverTaxi(new AID(ac.getName(),true),new Posicion((int)argumentos[0],(int)argumentos[1]));
             ac.start();
         }
         catch (Exception e) {

@@ -1,6 +1,8 @@
 package trabajo.parte2.dominio;
 
-public class Posicion {
+import java.io.Serializable;
+
+public class Posicion implements Serializable {
     private int fila, columna;
 
     public Posicion(int fila, int columna) {

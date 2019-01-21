@@ -22,6 +22,23 @@ public class TaxiComportamiento extends Behaviour {
     // Se encarga de enviar los mensajes de petición de las casillas adyacentes
     @Override
     public void action() {
+        int filaActual = ((Taxi)this.myAgent).getFila();
+        int columnaActual = ((Taxi)this.myAgent).getColumna();
+        // Filas y columnas a comprobar. Sentido horario.
+        int[] filas = { Math.abs(filaActual-1), filaActual, filaActual+1, filaActual };
+        int[] columnas = { columnaActual, columnaActual+1, columnaActual, Math.abs(columnaActual-1) };
+
+        // Resultado funciones de utilidad, sentido horario.
+        double[] funcionesUtilidad = {0.0,0.0,0.0,0.0};
+        int sentidoMax = 0; // 0^ 1> 2v 3<
+        for(int i=0;i<4;i++){
+            funcionesUtilidad[i] = funcionUtilidad(filas[i],columnas[i]);
+            if(funcionesUtilidad[i]>funcionesUtilidad[sentidoMax]){
+                sentidoMax = i;
+            }
+        }
+
+        solicitarMoverse(filas[sentidoMax],columnas[sentidoMax]);
         System.out.println(funcionUtilidad(((Taxi)this.myAgent).getFila(), ((Taxi)this.myAgent).getColumna()));
     }
 
@@ -127,8 +144,32 @@ public class TaxiComportamiento extends Behaviour {
         }
     }
 
+    // Solicita realizar un movimiento al GestorTablero
+    private void solicitarMoverse(int fila, int columna){
+        // Enviamos el mensaje al GestorTablero
+        ACLMessage m = new ACLMessage(ACLMessage.PROPOSE);
+        m.setProtocol(FIPANames.InteractionProtocol.FIPA_PROPOSE);
+        m.addReceiver(((Taxi)this.myAgent).getGestorTablero());
+        m.setContent(String.valueOf(fila) + "\n" + String.valueOf(columna));
+        this.myAgent.send(m);
+        m = this.myAgent.blockingReceive(MessageTemplate.MatchProtocol(
+                FIPANames.InteractionProtocol.FIPA_PROPOSE));
+
+        // Miramos la respuesta
+        switch (m.getPerformative()) {
+            case ACLMessage.ACCEPT_PROPOSAL:
+                ((Taxi)this.myAgent).setFila(fila);
+                ((Taxi)this.myAgent).setColumna(columna);
+                break;
+            case ACLMessage.REJECT_PROPOSAL: break;
+            case ACLMessage.REFUSE: throw new RuntimeException("Solicitud rechazada (REFUSE)");
+            case ACLMessage.NOT_UNDERSTOOD: throw new RuntimeException("Mensaje enviado incorrecto");
+            default: throw new RuntimeException("Performativa no esperada");
+        }
+    }
+
     @Override
     public boolean done() {
-        return true;
+        return false;
     }
 }

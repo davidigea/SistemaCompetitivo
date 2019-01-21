@@ -7,6 +7,7 @@ import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import trabajo.parte2.agente.Taxi;
 import trabajo.parte2.dominio.Casilla;
+import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Tablero;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -170,6 +171,8 @@ public class TaxiComportamiento extends Behaviour {
 
     @Override
     public boolean done() {
-        return false;
+        //Termina si ha llegado a un pasajero
+        Tablero t = pedirTablero();
+        return t.getCasilla(((Taxi)this.myAgent).getFila(),((Taxi)this.myAgent).getColumna()).getE() == Estado.PERSONA;
     }
 }

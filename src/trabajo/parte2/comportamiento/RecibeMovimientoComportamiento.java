@@ -37,14 +37,17 @@ public class RecibeMovimientoComportamiento extends AchieveREResponder {
             int fila = Integer.parseInt(st.nextToken());
             int columna = Integer.parseInt(st.nextToken());
             AID taxi = request.getSender();
+            Posicion nuevaPosicion = new Posicion(fila,columna);
 
             ACLMessage inform = request.createReply();
             inform.setPerformative(ACLMessage.REJECT_PROPOSAL);
 
             if(Posicion.esAlcanzable(
                     ((GestorTablero)myAgent).getTablero().getTaxis().get(taxi),
-                    new Posicion(fila,columna)))
+                    nuevaPosicion))
             {
+                // actualizar casilla en tablero
+                ((GestorTablero)myAgent).moverTaxi(taxi,nuevaPosicion);
                 inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
             }
 

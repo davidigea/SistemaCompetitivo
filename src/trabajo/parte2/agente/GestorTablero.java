@@ -6,6 +6,8 @@ import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import trabajo.parte2.comportamiento.RecibeConsultaComportamiento;
 import trabajo.parte2.comportamiento.RecibeMovimientoComportamiento;
+import trabajo.parte2.dominio.Casilla;
+import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Posicion;
 import trabajo.parte2.dominio.Tablero;
 
@@ -16,6 +18,7 @@ public class GestorTablero extends Agent {
     public void setup() {
         //TODO: crear tablero
         tablero = new Tablero(10, 10);
+        tablero.setCasilla(0,1, new Casilla(Estado.PERSONA, 0, 0, 1));
         ContainerController cc = getContainerController();
         AgentController ac;
         Object[] argumentos = new Object[3];

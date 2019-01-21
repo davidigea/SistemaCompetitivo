@@ -22,33 +22,33 @@ public class TaxiComportamiento extends Behaviour {
     // Se encarga de enviar los mensajes de petición de las casillas adyacentes
     @Override
     public void action() {
-        Tablero c = pedirTablero(); System.out.println(c);
+        System.out.println(funcionUtilidad(((Taxi)this.myAgent).getFila(), ((Taxi)this.myAgent).getColumna()));
     }
 
     // Calcula la función de utilidad para una casilla
     // Algoritmo de programación dinámica
     private double funcionUtilidad(int fila, int columna) {
         // Variables necesarias
-        Tablero t = new Tablero(10,10);
-        HashMap<Casilla, Double> valoresUtilidad = new HashMap<>();
+        Tablero t = pedirTablero();
+        double[][] valoresUtilidad = new double[t.getNumFilas()][t.getNumColumnas()];
         HashSet<Casilla> yaCalculadas = new HashSet<>();
         HashSet<Casilla> ultimosConocidos = new HashSet<>();
 
         // Rellenamos los valores de utilidad ya conocidos
         for(int i=0; i<t.getNumFilas(); i++) {
             for(int j=0; j<t.getNumColumnas(); j++) {
-                Casilla c = t.getCasilla(fila, columna);
+                Casilla c = t.getCasilla(i, j);
                 switch(c.getE()) {
                     case COCHE: case MURO:
-                        valoresUtilidad.put(c, VALOR_MURO_COCHE);
+                        valoresUtilidad[i][j] = VALOR_MURO_COCHE;
                         yaCalculadas.add(c);
                         break;
                     case PERSONA:
-                        valoresUtilidad.put(c, VALOR_PERSONA);
+                        valoresUtilidad[i][j] = VALOR_PERSONA;
                         yaCalculadas.add(c);
                         ultimosConocidos.add(c);
                         break;
-                    default: break;
+                    default: valoresUtilidad[i][j] = 0.0; break;
                 }
             }
         }
@@ -61,37 +61,43 @@ public class TaxiComportamiento extends Behaviour {
                 try { // Casilla norte
                     aux = t.getCasilla(c.getFila()-1,c.getColumna());
                     if(!yaCalculadas.contains(aux)) {
-                        anyadirValores(aux, valoresUtilidad.get(c), valoresUtilidad, yaCalculadas, nuevos);
+                        valoresUtilidad[aux.getFila()][aux.getColumna()] =
+                                valoresUtilidad[c.getFila()][c.getColumna()] - PENALIZACION_POR_PASO;
+                        anyadirValores(aux, yaCalculadas, nuevos);
                     }
                 } catch(IndexOutOfBoundsException e) {}
                 try { // Casilla sur
                     aux = t.getCasilla(c.getFila()+1,c.getColumna());
                     if(!yaCalculadas.contains(aux)) {
-                        anyadirValores(aux, valoresUtilidad.get(c), valoresUtilidad, yaCalculadas, nuevos);
+                        valoresUtilidad[aux.getFila()][aux.getColumna()] =
+                                valoresUtilidad[c.getFila()][c.getColumna()] - PENALIZACION_POR_PASO;
+                        anyadirValores(aux, yaCalculadas, nuevos);
                     }
                 } catch(IndexOutOfBoundsException e) {}
                 try { // Casilla este
                     aux = t.getCasilla(c.getFila(),c.getColumna()+1);
                     if(!yaCalculadas.contains(aux)) {
-                        anyadirValores(aux, valoresUtilidad.get(c), valoresUtilidad, yaCalculadas, nuevos);
+                        valoresUtilidad[aux.getFila()][aux.getColumna()] =
+                                valoresUtilidad[c.getFila()][c.getColumna()] - PENALIZACION_POR_PASO;
+                        anyadirValores(aux, yaCalculadas, nuevos);
                     }
                 } catch(IndexOutOfBoundsException e) {}
                 try { // Casilla oeste
                     aux = t.getCasilla(c.getFila(),c.getColumna()-1);
                     if(!yaCalculadas.contains(aux)) {
-                        anyadirValores(aux, valoresUtilidad.get(c), valoresUtilidad, yaCalculadas, nuevos);
+                        valoresUtilidad[aux.getFila()][aux.getColumna()] =
+                                valoresUtilidad[c.getFila()][c.getColumna()] - PENALIZACION_POR_PASO;
+                        anyadirValores(aux, yaCalculadas, nuevos);
                     }
                 } catch(IndexOutOfBoundsException e) {}
             }
             ultimosConocidos = nuevos;
         }
-        return valoresUtilidad.get(t.getCasilla(fila,columna));
+        return valoresUtilidad[fila][columna];
     }
 
     // Función que añade los valores a los correspondientes almacenes
-    private void anyadirValores(Casilla aux, double valorOriginal, HashMap<Casilla, Double> valoresUtilidad,
-                                HashSet<Casilla> yaCalculadas, HashSet<Casilla> nuevos) {
-        valoresUtilidad.put(aux, valoresUtilidad.get(valorOriginal) - PENALIZACION_POR_PASO);
+    private void anyadirValores(Casilla aux, HashSet<Casilla> yaCalculadas, HashSet<Casilla> nuevos) {
         yaCalculadas.add(aux);
         nuevos.add(aux);
     }

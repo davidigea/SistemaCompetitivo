@@ -93,10 +93,17 @@ public class Tablero implements Serializable {
         for(int i=0; i<numFilas; i++) {
             for(int j=0; j<numColumnas; j++) {
                 switch(casillas[i][j].getE()) {
-                    case MURO: s.append("M"); break;
-                    case PERSONA: s.append("P"); break;
-                    case COCHE: s.append("C"); break;
-                    default: s.append(" "); break;
+                    case MURO: s.append("M | "); break;
+                    case PERSONA: s.append("P | "); break;
+                    case COCHE: s.append("C | "); break;
+                    default: s.append("  | "); break;
+                }
+            }
+            s.delete(s.length()-3, s.length());
+            s.append("\n");
+            if((i+1) != numFilas) {
+                for(int j=0; j<numColumnas*4; j++) {
+                    s.append("_");
                 }
             }
             s.append("\n");

@@ -49,6 +49,7 @@ public class RecibeMovimientoComportamiento extends AchieveREResponder {
                 // actualizar casilla en tablero
                 ((GestorTablero)myAgent).moverTaxi(taxi,nuevaPosicion);
                 inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                System.out.println(((GestorTablero)this.myAgent).getTablero() + "\n\n");
             }
 
             return inform;

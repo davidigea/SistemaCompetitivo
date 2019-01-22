@@ -7,7 +7,6 @@ import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import trabajo.parte2.agente.Taxi;
 import trabajo.parte2.dominio.Casilla;
-import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Tablero;
 import java.util.HashSet;
 
@@ -18,33 +17,46 @@ public class TaxiComportamiento extends Behaviour {
     private static double PENALIZACION_POR_PASO = 0.02;
     private static double VALOR_PERSONA = 1.0;
     private static double VALOR_MURO_COCHE = -1.0;
+    boolean seguirBuscandoPasajero;
+
+    public TaxiComportamiento() {
+        super();
+        seguirBuscandoPasajero = true;
+    }
 
     // Se encarga de enviar los mensajes de petición de las casillas adyacentes
     @Override
     public void action() {
         int filaActual = ((Taxi)this.myAgent).getFila();
         int columnaActual = ((Taxi)this.myAgent).getColumna();
+
         // Filas y columnas a comprobar. Sentido horario.
         int[] filas = { Math.abs(filaActual-1), filaActual, filaActual+1, filaActual };
         int[] columnas = { columnaActual, columnaActual+1, columnaActual, Math.abs(columnaActual-1) };
 
-        // Resultado funciones de utilidad, sentido horario.
-        double[] funcionesUtilidad = {0.0,0.0,0.0,0.0};
+        // Valores de utilidad, sentido horario.
+        double[] funcionesUtilidad = funcionUtilidad(filaActual, columnaActual);
         int sentidoMax = 0; // 0^ 1> 2v 3<
-        for(int i=0;i<4;i++){
-            funcionesUtilidad[i] = funcionUtilidad(filas[i],columnas[i]);
+        for(int i=1;i<4;i++){
             if(funcionesUtilidad[i]>funcionesUtilidad[sentidoMax]){
                 sentidoMax = i;
             }
         }
 
-        solicitarMoverse(filas[sentidoMax],columnas[sentidoMax]);
-        System.out.println(funcionUtilidad(((Taxi)this.myAgent).getFila(), ((Taxi)this.myAgent).getColumna()));
+        // Solo nos movemos si es mejor que quedarse quieto
+        if(funcionesUtilidad[sentidoMax]>0.0) {
+            solicitarMoverse(filas[sentidoMax],columnas[sentidoMax]);
+            if(funcionesUtilidad[sentidoMax] == 1.0) {
+                seguirBuscandoPasajero = false;
+            }
+        }
     }
 
     // Calcula la función de utilidad para una casilla
     // Algoritmo de programación dinámica
-    private double funcionUtilidad(int fila, int columna) {
+    // Devuelve los valores de utilidad de las casillas norte, este, sur y oeste
+    // respecto de (fila, columna)
+    private double[] funcionUtilidad(int fila, int columna) {
         // Variables necesarias
         Tablero t = pedirTablero();
         double[][] valoresUtilidad = new double[t.getNumFilas()][t.getNumColumnas()];
@@ -118,7 +130,16 @@ public class TaxiComportamiento extends Behaviour {
             }
             ultimosConocidos = nuevos;
         }
-        return valoresUtilidad[fila][columna];
+        double[] valores = new double[4];
+        try { valores[0] = valoresUtilidad[fila - 1][columna]; }
+        catch(IndexOutOfBoundsException e) { valores[0] = -1.0; }
+        try { valores[1] = valoresUtilidad[fila][columna+1]; }
+        catch(IndexOutOfBoundsException e) { valores[1] = -1.0; }
+        try { valores[2] = valoresUtilidad[fila + 1][columna]; }
+        catch(IndexOutOfBoundsException e) { valores[2] = -1.0; }
+        try { valores[3] = valoresUtilidad[fila][columna-1]; }
+        catch(IndexOutOfBoundsException e) { valores[3] = -1.0; }
+        return valores;
     }
 
     // Función que añade los valores a los correspondientes almacenes
@@ -180,6 +201,11 @@ public class TaxiComportamiento extends Behaviour {
     public boolean done() {
         //Termina si ha llegado a un pasajero
         Tablero t = pedirTablero();
-        return t.getCasilla(((Taxi)this.myAgent).getFila(),((Taxi)this.myAgent).getColumna()).getE() == Estado.PERSONA;
+        if(!seguirBuscandoPasajero) {
+            System.out.print(myAgent.getName() + " ha recogido un pasajero en (");
+            System.out.println(((Taxi)this.myAgent).getFila() + "," +((Taxi)this.myAgent).getColumna() + ")");
+            return true;
+        }
+        return false;
     }
 }

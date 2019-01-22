@@ -49,6 +49,13 @@ public class Tablero implements Serializable {
         casillas[fila][columna] = c;
     }
 
+    // Modificar una casilla
+    public void setCasilla(int fila, int columna, Estado e) {
+        Casilla c = casillas[fila][columna];
+        c.setE(e);
+        casillas[fila][columna] = c;
+    }
+
     // Obtener posiciones de taxis
     public HashMap<AID, Posicion> getTaxis() {
         return taxis;
@@ -56,9 +63,15 @@ public class Tablero implements Serializable {
 
     // Establecer posicion de un taxi
     public void moverTaxi(AID taxi, Posicion posicion) {
+        // Si el taxi ya estaba en el tablero, dejar posición vacía
+        Posicion c = taxis.get(taxi);
+        if(c != null) {
+            setCasilla(c.getFila(), c.getColumna(), Estado.LIBRE);
+        }
         this.taxis.put(taxi,posicion);
         int numCochesPasados = casillas[posicion.getFila()][posicion.getColumna()].getNumCochesPasados();
         casillas[posicion.getFila()][posicion.getColumna()].setNumCochesPasados(numCochesPasados+1);
+        casillas[posicion.getFila()][posicion.getColumna()].setE(Estado.COCHE);
     }
 
     public int getNumFilas() {

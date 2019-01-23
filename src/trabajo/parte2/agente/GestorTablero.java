@@ -18,7 +18,7 @@ public class GestorTablero extends Agent {
 
     @Override
     public void setup() {
-        tablero = crearTableroAleatorio(10, 10, 10, 5, 3);
+        tablero = crearTableroAleatorio(10, 10, 10, 5, 5);
         System.out.println(tablero + "\n" + "\n");
         addBehaviour(new RecibeConsultaComportamiento(this));
         addBehaviour(new RecibeMovimientoComportamiento(this));
@@ -35,14 +35,13 @@ public class GestorTablero extends Agent {
     public Tablero crearTableroAleatorio(int numFilas, int numColumnas,
                                          int numMuros, int numPersonas,
                                          int numTaxis) {
-        if((numMuros+numPersonas+numTaxis)>(numFilas*numPersonas)) {
+        if((numMuros+numPersonas+numTaxis)>(numFilas*numColumnas)) {
             throw new RuntimeException("No puede crearse un tablero con más elementos que casillas");
         }
         Tablero t = new Tablero(numFilas, numColumnas);
         int f, c;
         ContainerController cc = getContainerController();
         AgentController ac;
-        Object[] argumentos = new Object[3];
 
         // Añadimos los muros
         while(numMuros>0) {
@@ -70,6 +69,7 @@ public class GestorTablero extends Agent {
             c = numeroAleatorio(numColumnas);
             if(t.getCasilla(f,c).getE() == Estado.LIBRE) {
                 t.setCasilla(f, c, Estado.COCHE, 0);
+                Object[] argumentos = new Object[3];
                 argumentos[0] = f;
                 argumentos[1] = c;
                 argumentos[2] = this.getAID();

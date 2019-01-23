@@ -1,7 +1,6 @@
 package trabajo.parte2.comportamiento;
 
 import jade.core.Agent;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
 import jade.domain.FIPAAgentManagement.RefuseException;
 import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
@@ -9,8 +8,6 @@ import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 import trabajo.parte2.agente.GestorTablero;
 import java.io.IOException;
-import java.util.NoSuchElementException;
-import java.util.StringTokenizer;
 
 // Comportarmiento del GestorTablero ante una petición de una casilla.
 // Devuelve el contenido de una casilla

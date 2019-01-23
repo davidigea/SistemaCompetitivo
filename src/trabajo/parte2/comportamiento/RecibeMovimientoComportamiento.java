@@ -10,6 +10,7 @@ import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 import trabajo.parte2.agente.GestorTablero;
 import trabajo.parte2.dominio.Casilla;
+import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Posicion;
 
 import java.io.IOException;
@@ -44,8 +45,7 @@ public class RecibeMovimientoComportamiento extends AchieveREResponder {
 
             if(Posicion.esAlcanzable(
                     ((GestorTablero)myAgent).getTablero().getTaxis().get(taxi),
-                    nuevaPosicion))
-            {
+                    nuevaPosicion)) {
                 // actualizar casilla en tablero
                 ((GestorTablero)myAgent).moverTaxi(taxi,nuevaPosicion);
                 inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);

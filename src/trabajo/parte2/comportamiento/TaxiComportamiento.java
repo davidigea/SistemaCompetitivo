@@ -14,10 +14,10 @@ import java.util.HashSet;
 // Envia una petición de casilla al GestorTablero
 public class TaxiComportamiento extends Behaviour {
     // Variables
-    private static double PENALIZACION_POR_PASO = 0.02;
-    private static double VALOR_PERSONA = 1.0;
-    private static double VALOR_MURO_COCHE = -1.0;
-    boolean seguirBuscandoPasajero;
+    private static final double PENALIZACION_POR_PASO = 0.02;
+    private static final double VALOR_PERSONA = 10.0;
+    private static final double VALOR_MURO_COCHE = -1.0;
+    private boolean seguirBuscandoPasajero;
 
     public TaxiComportamiento() {
         super();
@@ -45,8 +45,8 @@ public class TaxiComportamiento extends Behaviour {
 
         // Solo nos movemos si es mejor que quedarse quieto
         if(funcionesUtilidad[sentidoMax]>0.0) {
-            solicitarMoverse(filas[sentidoMax],columnas[sentidoMax]);
-            if(funcionesUtilidad[sentidoMax] == 1.0) {
+            if(solicitarMoverse(filas[sentidoMax],columnas[sentidoMax])
+                    && funcionesUtilidad[sentidoMax] == VALOR_PERSONA) {
                 seguirBuscandoPasajero = false;
             }
         }
@@ -86,50 +86,35 @@ public class TaxiComportamiento extends Behaviour {
         while(yaCalculadas.size()<(t.getNumColumnas()*t.getNumFilas())) {
             HashSet<Casilla> nuevos = new HashSet<>();
             for(Casilla c : ultimosConocidos) {
-                Casilla aux;
-                try { // Casilla norte
-                    aux = t.getCasilla(c.getFila()-1,c.getColumna());
-                    if(!yaCalculadas.contains(aux)) {
-                        double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
-                        valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                                valoresUtilidad[c.getFila()][c.getColumna()]
-                                        - PENALIZACION_POR_PASO - penalizacion;
-                        anyadirValores(aux, yaCalculadas, nuevos);
-                    }
-                } catch(IndexOutOfBoundsException e) {}
-                try { // Casilla sur
-                    aux = t.getCasilla(c.getFila()+1,c.getColumna());
-                    if(!yaCalculadas.contains(aux)) {
-                        double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
-                        valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                                valoresUtilidad[c.getFila()][c.getColumna()]
-                                        - PENALIZACION_POR_PASO - penalizacion;
-                        anyadirValores(aux, yaCalculadas, nuevos);
-                    }
-                } catch(IndexOutOfBoundsException e) {}
-                try { // Casilla este
-                    aux = t.getCasilla(c.getFila(),c.getColumna()+1);
-                    if(!yaCalculadas.contains(aux)) {
-                        double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
-                        valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                                valoresUtilidad[c.getFila()][c.getColumna()]
-                                        - PENALIZACION_POR_PASO - penalizacion;
-                        anyadirValores(aux, yaCalculadas, nuevos);
-                    }
-                } catch(IndexOutOfBoundsException e) {}
-                try { // Casilla oeste
-                    aux = t.getCasilla(c.getFila(),c.getColumna()-1);
-                    if(!yaCalculadas.contains(aux)) {
-                        double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
-                        valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                                valoresUtilidad[c.getFila()][c.getColumna()]
-                                        - PENALIZACION_POR_PASO - penalizacion;
-                        anyadirValores(aux, yaCalculadas, nuevos);
-                    }
-                } catch(IndexOutOfBoundsException e) {}
+                calcularUtilidadCasilla(t, c, -1, 0, valoresUtilidad, yaCalculadas, nuevos);
+                calcularUtilidadCasilla(t, c, +1, 0, valoresUtilidad, yaCalculadas, nuevos);
+                calcularUtilidadCasilla(t, c, 0, +1, valoresUtilidad, yaCalculadas, nuevos);
+                calcularUtilidadCasilla(t, c, 0, -1, valoresUtilidad, yaCalculadas, nuevos);
             }
             ultimosConocidos = nuevos;
         }
+        return valoresNESO(valoresUtilidad, fila, columna);
+    }
+
+    // Calcula la utilidad de (c.getFila+d_f, c.getColumna()+d_c)
+    private void calcularUtilidadCasilla(Tablero t, Casilla c, int d_f, int d_c,
+                                         double[][] valoresUtilidad, HashSet<Casilla> yaCalculadas,
+                                         HashSet<Casilla> nuevos) {
+        try {
+            Casilla aux = t.getCasilla(c.getFila()+d_f,c.getColumna()+d_c);
+            if(!yaCalculadas.contains(aux)) {
+                double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
+                valoresUtilidad[aux.getFila()][aux.getColumna()] =
+                        valoresUtilidad[c.getFila()][c.getColumna()]
+                                - PENALIZACION_POR_PASO - penalizacion;
+                yaCalculadas.add(aux);
+                nuevos.add(aux);
+            }
+        } catch(IndexOutOfBoundsException e) {}
+    }
+
+    // Devuelve los valores de utilidad al norte, este, sur y oeste de (fila,columna)
+    private double[] valoresNESO(double[][] valoresUtilidad, int fila, int columna) {
         double[] valores = new double[4];
         try { valores[0] = valoresUtilidad[fila - 1][columna]; }
         catch(IndexOutOfBoundsException e) { valores[0] = -1.0; }
@@ -140,12 +125,6 @@ public class TaxiComportamiento extends Behaviour {
         try { valores[3] = valoresUtilidad[fila][columna-1]; }
         catch(IndexOutOfBoundsException e) { valores[3] = -1.0; }
         return valores;
-    }
-
-    // Función que añade los valores a los correspondientes almacenes
-    private void anyadirValores(Casilla aux, HashSet<Casilla> yaCalculadas, HashSet<Casilla> nuevos) {
-        yaCalculadas.add(aux);
-        nuevos.add(aux);
     }
 
     // Pide el tablero al GestorTablero
@@ -174,7 +153,8 @@ public class TaxiComportamiento extends Behaviour {
     }
 
     // Solicita realizar un movimiento al GestorTablero
-    private void solicitarMoverse(int fila, int columna){
+    // Devuelve true si se permite el movimiento, y false si no
+    private boolean solicitarMoverse(int fila, int columna){
         // Enviamos el mensaje al GestorTablero
         ACLMessage m = new ACLMessage(ACLMessage.PROPOSE);
         m.setProtocol(FIPANames.InteractionProtocol.FIPA_PROPOSE);
@@ -189,8 +169,8 @@ public class TaxiComportamiento extends Behaviour {
             case ACLMessage.ACCEPT_PROPOSAL:
                 ((Taxi)this.myAgent).setFila(fila);
                 ((Taxi)this.myAgent).setColumna(columna);
-                break;
-            case ACLMessage.REJECT_PROPOSAL: break;
+                return true;
+            case ACLMessage.REJECT_PROPOSAL: return false;
             case ACLMessage.REFUSE: throw new RuntimeException("Solicitud rechazada (REFUSE)");
             case ACLMessage.NOT_UNDERSTOOD: throw new RuntimeException("Mensaje enviado incorrecto");
             default: throw new RuntimeException("Performativa no esperada");
@@ -200,12 +180,6 @@ public class TaxiComportamiento extends Behaviour {
     @Override
     public boolean done() {
         //Termina si ha llegado a un pasajero
-        Tablero t = pedirTablero();
-        if(!seguirBuscandoPasajero) {
-            System.out.print(myAgent.getName() + " ha recogido un pasajero en (");
-            System.out.println(((Taxi)this.myAgent).getFila() + "," +((Taxi)this.myAgent).getColumna() + ")");
-            return true;
-        }
-        return false;
+        return !seguirBuscandoPasajero;
     }
 }

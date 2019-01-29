@@ -74,6 +74,10 @@ public class Tablero implements Serializable {
         casillas[posicion.getFila()][posicion.getColumna()].setE(Estado.COCHE);
     }
 
+    public void borrarTaxi(AID t) {
+        taxis.remove(t);
+    }
+
     public int getNumFilas() {
         return numFilas;
     }

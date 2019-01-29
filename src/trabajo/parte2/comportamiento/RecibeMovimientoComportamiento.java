@@ -9,11 +9,8 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 import trabajo.parte2.agente.GestorTablero;
-import trabajo.parte2.dominio.Casilla;
 import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Posicion;
-
-import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
@@ -46,10 +43,24 @@ public class RecibeMovimientoComportamiento extends AchieveREResponder {
             if(Posicion.esAlcanzable(
                     ((GestorTablero)myAgent).getTablero().getTaxis().get(taxi),
                     nuevaPosicion)) {
+                // Obtenemos casilla antes de ir a ella
+                Estado e = ((GestorTablero)myAgent).getTablero().getCasilla(fila, columna).getE();
+
                 // actualizar casilla en tablero
                 ((GestorTablero)myAgent).moverTaxi(taxi,nuevaPosicion);
+
+                // Si la casilla alcanzada es un peatón sacamos al taxi
+                if(e == Estado.PERSONA) {
+                    ((GestorTablero) myAgent).getTablero().setCasilla(fila, columna, Estado.MURO);
+                    ((GestorTablero) myAgent).getTablero().borrarTaxi(taxi);
+                }
+
+                // Enviamos el mensaje
                 inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                 System.out.println(((GestorTablero)this.myAgent).getTablero() + "\n\n");
+            }
+            else {
+                ((GestorTablero) myAgent).setNumColisiones(((GestorTablero) myAgent).getNumColisiones()+1);
             }
 
             return inform;

@@ -18,7 +18,7 @@ public class TaxiComportamiento extends Behaviour {
     private static final double VALOR_PERSONA = 10.0;
     private static final double VALOR_MURO_COCHE = -1.0;
     private static final double GAMMA = 0.9;
-    private static final double cotaError = 0.001;
+    private static final int NUM_ITERACIONES = 1000;
     private boolean seguirBuscandoPasajero;
 
     public TaxiComportamiento() {
@@ -58,8 +58,6 @@ public class TaxiComportamiento extends Behaviour {
         double[][] R = new double[t.getNumFilas()][t.getNumColumnas()];
         double probabilidadColision = new Double(t.getTaxis().size()-1)/
                 new Double(t.getNumColumnas()*t.getNumFilas());
-        double errorAnterior;
-        double errorActual = Double.POSITIVE_INFINITY;
 
         // Rellenamos los valores iniciales de U y R
         for(int i=0; i<t.getNumFilas(); i++) {
@@ -90,10 +88,7 @@ public class TaxiComportamiento extends Behaviour {
         U[fila][columna] = 0.0;
 
         // Iteramos para calcular la utilidad óptima
-        do {
-            errorAnterior = errorActual;
-            errorActual = 0.0;
-            int numCasillasCalculadas = 0;
+        for(int num_iter=0; num_iter<NUM_ITERACIONES; num_iter++) {
             double[][] U_n = new double[t.getNumFilas()][t.getNumColumnas()];
             for(int i=0; i<t.getNumFilas(); i++) {
                 for (int j = 0; j < t.getNumColumnas(); j++) {
@@ -112,14 +107,11 @@ public class TaxiComportamiento extends Behaviour {
                             }
                         }
                         U_n[i][j] = R[i][j] + GAMMA*max;
-                        errorActual += Math.abs(U[i][j]-U_n[i][j]);
-                        numCasillasCalculadas++;
                     }
                 }
             }
             U = U_n;
-            errorActual = errorActual/new Double(numCasillasCalculadas);
-        }while(Math.abs(errorAnterior-errorActual)>cotaError);
+        }
         return U;
     }
 

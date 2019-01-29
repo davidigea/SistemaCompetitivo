@@ -15,13 +15,20 @@ import java.security.SecureRandom;
 
 public class GestorTablero extends Agent {
     private Tablero tablero;
+    private int numColisiones;
 
     @Override
     public void setup() {
-        tablero = crearTableroAleatorio(10, 10, 10, 3, 3);
+        tablero = crearTableroAleatorio(10, 10, 10, 10, 10);
+        numColisiones = 0;
         System.out.println(tablero + "\n" + "\n");
         addBehaviour(new RecibeConsultaComportamiento(this));
         addBehaviour(new RecibeMovimientoComportamiento(this));
+    }
+
+    @Override
+    public void takeDown() {
+        System.out.println(numColisiones);
     }
 
     public Tablero getTablero(){return tablero;}
@@ -96,5 +103,13 @@ public class GestorTablero extends Agent {
         if (aux<0) { aux = aux*(-1); }
         aux = aux%limite;
         return aux;
+    }
+
+    public int getNumColisiones() {
+        return numColisiones;
+    }
+
+    public void setNumColisiones(int numColisiones) {
+        this.numColisiones = numColisiones;
     }
 }

@@ -46,21 +46,26 @@ public class RecibeMovimientoComportamiento extends AchieveREResponder {
                 // Obtenemos casilla antes de ir a ella
                 Estado e = ((GestorTablero)myAgent).getTablero().getCasilla(fila, columna).getE();
 
-                // actualizar casilla en tablero
-                ((GestorTablero)myAgent).moverTaxi(taxi,nuevaPosicion);
-
-                // Si la casilla alcanzada es un peatón sacamos al taxi
-                if(e == Estado.PERSONA) {
-                    ((GestorTablero) myAgent).getTablero().setCasilla(fila, columna, Estado.MURO);
-                    ((GestorTablero) myAgent).getTablero().borrarTaxi(taxi);
+                switch(e){
+                    case PERSONA:
+                        // Si la casilla alcanzada es un peatón sacamos al taxi
+                        ((GestorTablero) myAgent).moverTaxi(taxi, nuevaPosicion);
+                        ((GestorTablero) myAgent).getTablero().setCasilla(fila, columna, Estado.MURO);
+                        ((GestorTablero) myAgent).getTablero().borrarTaxi(taxi);
+                        inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                        break;
+                    case LIBRE:
+                        // actualizar casilla en tablero
+                        ((GestorTablero) myAgent).moverTaxi(taxi, nuevaPosicion);
+                        inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                        break;
+                    default:
+                        // Si hay un muro o taxi, aumentar número de colisiones
+                        ((GestorTablero) myAgent).setNumColisiones(((GestorTablero) myAgent).getNumColisiones()+1);
                 }
 
                 // Enviamos el mensaje
-                inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                 System.out.println(((GestorTablero)this.myAgent).getTablero() + "\n\n");
-            }
-            else {
-                ((GestorTablero) myAgent).setNumColisiones(((GestorTablero) myAgent).getNumColisiones()+1);
             }
 
             return inform;

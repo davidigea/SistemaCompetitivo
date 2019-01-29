@@ -18,7 +18,7 @@ public class TaxiComportamiento extends Behaviour {
     private static final double VALOR_PERSONA = 10.0;
     private static final double VALOR_MURO_COCHE = -1.0;
     private static final double GAMMA = 0.9;
-    private static final double cotaError = 0.03;
+    private static final double cotaError = 0.001;
     private boolean seguirBuscandoPasajero;
 
     public TaxiComportamiento() {
@@ -42,7 +42,7 @@ public class TaxiComportamiento extends Behaviour {
         int sentidoMax = movimiento(U, filaActual, columnaActual);
 
         // Solo nos movemos si es mejor que quedarse quieto
-        if(U[filas[sentidoMax]][columnas[sentidoMax]]>0.0) {
+        if(sentidoMax >=0) {
             if(solicitarMoverse(filas[sentidoMax],columnas[sentidoMax])
                     && U[filas[sentidoMax]][columnas[sentidoMax]] == VALOR_PERSONA) {
                 // Paramos si hemos llegado a un pasajero
@@ -56,7 +56,7 @@ public class TaxiComportamiento extends Behaviour {
         // Variables necesarias
         double[][] U = new double[t.getNumFilas()][t.getNumColumnas()];
         double[][] R = new double[t.getNumFilas()][t.getNumColumnas()];
-        double probabilidadColision = new Double(t.getTaxis().size())-1/
+        double probabilidadColision = new Double(t.getTaxis().size()-1)/
                 new Double(t.getNumColumnas()*t.getNumFilas());
         double errorAnterior;
         double errorActual = Double.POSITIVE_INFINITY;
@@ -94,10 +94,11 @@ public class TaxiComportamiento extends Behaviour {
             errorAnterior = errorActual;
             errorActual = 0.0;
             int numCasillasCalculadas = 0;
-            double[][] U_n = U.clone();
+            double[][] U_n = new double[t.getNumFilas()][t.getNumColumnas()];
             for(int i=0; i<t.getNumFilas(); i++) {
                 for (int j = 0; j < t.getNumColumnas(); j++) {
                     Casilla c = t.getCasilla(i,j);
+                    U_n[i][j] = U[i][j];
                     if(c.getE() == Estado.LIBRE || (i==fila && j==columna)) {
                         double[] valores = new double[4];
                         valores[0] = valorCasilla(t, c, -1, 0, U, probabilidadColision);
@@ -117,7 +118,7 @@ public class TaxiComportamiento extends Behaviour {
                 }
             }
             U = U_n;
-            errorActual = errorActual/numCasillasCalculadas;
+            errorActual = errorActual/new Double(numCasillasCalculadas);
         }while(Math.abs(errorAnterior-errorActual)>cotaError);
         return U;
     }
@@ -143,10 +144,10 @@ public class TaxiComportamiento extends Behaviour {
     // Devuelve 3 si ir al oeste
     private int movimiento(double[][] U, int f, int c) {
         double[] valores = new double[4];
-        valores[0] = devolverValor(U, -1, 0);
-        valores[1] = devolverValor(U, 0, +1);
-        valores[2] = devolverValor(U, +1, 0);
-        valores[3] = devolverValor(U, 0, -1);
+        valores[0] = devolverValor(U, f-1, c);
+        valores[1] = devolverValor(U, f, c+1);
+        valores[2] = devolverValor(U, f+1, c);
+        valores[3] = devolverValor(U, f, c-1);
         int sentido=0;
         for(int i=1; i<4; i++) {
             if(valores[i]>valores[sentido]) {
@@ -158,7 +159,7 @@ public class TaxiComportamiento extends Behaviour {
 
     // Devuelve el valor de U[f][c]
     // Si fuera de rango, devuelve -infinito
-    double devolverValor(double[][] U, int f, int c) {
+    private double devolverValor(double[][] U, int f, int c) {
         try{
             return U[f][c];
         }

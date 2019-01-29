@@ -18,7 +18,7 @@ public class GestorTablero extends Agent {
 
     @Override
     public void setup() {
-        tablero = crearTableroAleatorio(10, 10, 10, 5, 5);
+        tablero = crearTableroAleatorio(10, 10, 10, 1, 1);
         System.out.println(tablero + "\n" + "\n");
         addBehaviour(new RecibeConsultaComportamiento(this));
         addBehaviour(new RecibeMovimientoComportamiento(this));

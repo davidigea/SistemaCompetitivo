@@ -7,16 +7,18 @@ import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 import trabajo.parte2.agente.Taxi;
 import trabajo.parte2.dominio.Casilla;
+import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Tablero;
-import java.util.HashSet;
 
 // Comportamiento de un Taxi cuando quiere pedir una casilla
 // Envia una petición de casilla al GestorTablero
 public class TaxiComportamiento extends Behaviour {
     // Variables
-    private static final double PENALIZACION_POR_PASO = 0.02;
+    private static final double PENALIZACION_POR_PASO = -0.02;
     private static final double VALOR_PERSONA = 10.0;
     private static final double VALOR_MURO_COCHE = -1.0;
+    private static final double GAMMA = 0.9;
+    private static final double cotaError = 0.03;
     private boolean seguirBuscandoPasajero;
 
     public TaxiComportamiento() {
@@ -35,96 +37,134 @@ public class TaxiComportamiento extends Behaviour {
         int[] columnas = { columnaActual, columnaActual+1, columnaActual, Math.abs(columnaActual-1) };
 
         // Valores de utilidad, sentido horario.
-        double[] funcionesUtilidad = funcionUtilidad(filaActual, columnaActual);
-        int sentidoMax = 0; // 0^ 1> 2v 3<
-        for(int i=1;i<4;i++){
-            if(funcionesUtilidad[i]>funcionesUtilidad[sentidoMax]){
-                sentidoMax = i;
-            }
-        }
+        Tablero t = pedirTablero();
+        double[][] U = funcionUtilidad(t, filaActual, columnaActual);
+        int sentidoMax = movimiento(U, filaActual, columnaActual);
 
         // Solo nos movemos si es mejor que quedarse quieto
-        if(funcionesUtilidad[sentidoMax]>0.0) {
+        if(U[filas[sentidoMax]][columnas[sentidoMax]]>0.0) {
             if(solicitarMoverse(filas[sentidoMax],columnas[sentidoMax])
-                    && funcionesUtilidad[sentidoMax] == VALOR_PERSONA) {
+                    && U[filas[sentidoMax]][columnas[sentidoMax]] == VALOR_PERSONA) {
+                // Paramos si hemos llegado a un pasajero
                 seguirBuscandoPasajero = false;
             }
         }
     }
 
-    // Calcula la función de utilidad para una casilla
-    // Algoritmo de programación dinámica
-    // Devuelve los valores de utilidad de las casillas norte, este, sur y oeste
-    // respecto de (fila, columna)
-    private double[] funcionUtilidad(int fila, int columna) {
+    // Devuelve el valor de U
+    private double[][] funcionUtilidad(Tablero t, int fila, int columna) {
         // Variables necesarias
-        Tablero t = pedirTablero();
-        double[][] valoresUtilidad = new double[t.getNumFilas()][t.getNumColumnas()];
-        HashSet<Casilla> yaCalculadas = new HashSet<>();
-        HashSet<Casilla> ultimosConocidos = new HashSet<>();
+        double[][] U = new double[t.getNumFilas()][t.getNumColumnas()];
+        double[][] R = new double[t.getNumFilas()][t.getNumColumnas()];
+        double probabilidadColision = new Double(t.getTaxis().size())-1/
+                new Double(t.getNumColumnas()*t.getNumFilas());
+        double errorAnterior;
+        double errorActual = Double.POSITIVE_INFINITY;
 
-        // Rellenamos los valores de utilidad ya conocidos
+        // Rellenamos los valores iniciales de U y R
         for(int i=0; i<t.getNumFilas(); i++) {
-            for(int j=0; j<t.getNumColumnas(); j++) {
+            for (int j=0; j < t.getNumColumnas(); j++) {
                 Casilla c = t.getCasilla(i, j);
                 switch(c.getE()) {
                     case COCHE: case MURO:
-                        valoresUtilidad[i][j] = VALOR_MURO_COCHE;
-                        yaCalculadas.add(c);
+                        R[i][j] = VALOR_MURO_COCHE;
+                        U[i][j] = VALOR_MURO_COCHE;
                         break;
                     case PERSONA:
-                        valoresUtilidad[i][j] = VALOR_PERSONA;
-                        yaCalculadas.add(c);
-                        ultimosConocidos.add(c);
+                        R[i][j] = VALOR_PERSONA;
+                        U[i][j] = VALOR_PERSONA;
                         break;
-                    default: valoresUtilidad[i][j] = 0.0; break;
+                    default: // Casilla libre
+                        double penalizacionCoches = 0.0;
+                        for(int k=1; k<=c.getNumCochesPasados(); k++) {
+                            penalizacionCoches -= 1.0/(2*k);
+                        }
+                        R[i][j] = PENALIZACION_POR_PASO + penalizacionCoches;
+                        U[i][j] = PENALIZACION_POR_PASO + penalizacionCoches;
+                        break;
                 }
             }
         }
+        // Rellenamos la casilla donde nos encontramos
+        R[fila][columna] = 0.0;
+        U[fila][columna] = 0.0;
 
-        // Bucle que calcula los valores de todas las casillas libres
-        while(yaCalculadas.size()<(t.getNumColumnas()*t.getNumFilas())) {
-            HashSet<Casilla> nuevos = new HashSet<>();
-            for(Casilla c : ultimosConocidos) {
-                calcularUtilidadCasilla(t, c, -1, 0, valoresUtilidad, yaCalculadas, nuevos);
-                calcularUtilidadCasilla(t, c, +1, 0, valoresUtilidad, yaCalculadas, nuevos);
-                calcularUtilidadCasilla(t, c, 0, +1, valoresUtilidad, yaCalculadas, nuevos);
-                calcularUtilidadCasilla(t, c, 0, -1, valoresUtilidad, yaCalculadas, nuevos);
+        // Iteramos para calcular la utilidad óptima
+        do {
+            errorAnterior = errorActual;
+            errorActual = 0.0;
+            int numCasillasCalculadas = 0;
+            double[][] U_n = U.clone();
+            for(int i=0; i<t.getNumFilas(); i++) {
+                for (int j = 0; j < t.getNumColumnas(); j++) {
+                    Casilla c = t.getCasilla(i,j);
+                    if(c.getE() == Estado.LIBRE || (i==fila && j==columna)) {
+                        double[] valores = new double[4];
+                        valores[0] = valorCasilla(t, c, -1, 0, U, probabilidadColision);
+                        valores[1] = valorCasilla(t, c, +1, 0, U, probabilidadColision);
+                        valores[2] = valorCasilla(t, c, 0, +1, U, probabilidadColision);
+                        valores[3] = valorCasilla(t, c, 0, -1, U, probabilidadColision);
+                        double max = valores[0];
+                        for(int k=1; k<4; k++) {
+                            if(valores[k]>max) {
+                                max = valores[k];
+                            }
+                        }
+                        U_n[i][j] = R[i][j] + GAMMA*max;
+                        errorActual += Math.abs(U[i][j]-U_n[i][j]);
+                        numCasillasCalculadas++;
+                    }
+                }
             }
-            ultimosConocidos = nuevos;
-        }
-        return valoresNESO(valoresUtilidad, fila, columna);
+            U = U_n;
+            errorActual = errorActual/numCasillasCalculadas;
+        }while(Math.abs(errorAnterior-errorActual)>cotaError);
+        return U;
     }
 
-    // Calcula la utilidad de (c.getFila+d_f, c.getColumna()+d_c)
-    private void calcularUtilidadCasilla(Tablero t, Casilla c, int d_f, int d_c,
-                                         double[][] valoresUtilidad, HashSet<Casilla> yaCalculadas,
-                                         HashSet<Casilla> nuevos) {
-        try {
+    // Función auxiliar
+    private double valorCasilla(Tablero t, Casilla c, int d_f, int d_c,
+                                double[][] U, double probabilidadColision){
+        try{
             Casilla aux = t.getCasilla(c.getFila()+d_f,c.getColumna()+d_c);
-            if(!yaCalculadas.contains(aux)) {
-                double penalizacion = aux.getNumCochesPasados()>0 ? 1.0/(2*aux.getNumCochesPasados()) : 0.0;
-                valoresUtilidad[aux.getFila()][aux.getColumna()] =
-                        valoresUtilidad[c.getFila()][c.getColumna()]
-                                - PENALIZACION_POR_PASO - penalizacion;
-                yaCalculadas.add(aux);
-                nuevos.add(aux);
-            }
-        } catch(IndexOutOfBoundsException e) {}
+            return (1-probabilidadColision)*U[aux.getFila()][aux.getColumna()]
+                    + probabilidadColision*U[c.getFila()][c.getColumna()];
+        }
+        catch(IndexOutOfBoundsException e) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
     }
 
-    // Devuelve los valores de utilidad al norte, este, sur y oeste de (fila,columna)
-    private double[] valoresNESO(double[][] valoresUtilidad, int fila, int columna) {
+    // Devuelve -1 si quedarse en sitio
+    // Devuelve 0 si ir arriba
+    // Devuelve 1 si ir al este
+    // Devuelve 2 si ir al sur
+    // Devuelve 3 si ir al oeste
+    private int movimiento(double[][] U, int f, int c) {
         double[] valores = new double[4];
-        try { valores[0] = valoresUtilidad[fila - 1][columna]; }
-        catch(IndexOutOfBoundsException e) { valores[0] = -1.0; }
-        try { valores[1] = valoresUtilidad[fila][columna+1]; }
-        catch(IndexOutOfBoundsException e) { valores[1] = -1.0; }
-        try { valores[2] = valoresUtilidad[fila + 1][columna]; }
-        catch(IndexOutOfBoundsException e) { valores[2] = -1.0; }
-        try { valores[3] = valoresUtilidad[fila][columna-1]; }
-        catch(IndexOutOfBoundsException e) { valores[3] = -1.0; }
-        return valores;
+        valores[0] = devolverValor(U, -1, 0);
+        valores[1] = devolverValor(U, 0, +1);
+        valores[2] = devolverValor(U, +1, 0);
+        valores[3] = devolverValor(U, 0, -1);
+        int sentido=0;
+        for(int i=1; i<4; i++) {
+            if(valores[i]>valores[sentido]) {
+                sentido = i;
+            }
+        }
+        return valores[sentido]>0.0 ? sentido : -1;
+    }
+
+    // Devuelve el valor de U[f][c]
+    // Si fuera de rango, devuelve -infinito
+    double devolverValor(double[][] U, int f, int c) {
+        try{
+            return U[f][c];
+        }
+        catch(IndexOutOfBoundsException e) {
+            return Double.NEGATIVE_INFINITY;
+        }
     }
 
     // Pide el tablero al GestorTablero

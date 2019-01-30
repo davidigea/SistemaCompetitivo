@@ -22,7 +22,7 @@ public class GestorTablero extends Agent {
 
     @Override
     public void setup() {
-        tablero = crearTableroAleatorio(32, 32, 110, 110, 110);
+        tablero = crearTableroAleatorio(20, 20, 10, 2, 10);
         numColisiones = 0;
         System.out.println(tablero + "\n" + "\n");
         addBehaviour(new RecibeConsultaComportamiento(this));
@@ -32,10 +32,12 @@ public class GestorTablero extends Agent {
     @Override
     public void takeDown() {
         HashMap<AID, Boolean> h  = tablero.getSigueEnOptimo();
+        HashMap<AID, Posicion> a  = tablero.getTaxis();
         Iterator it = h.entrySet().iterator();
         int caminosOptimos = 0;
         while(it.hasNext()) {
-            if((Boolean)((Map.Entry)it.next()).getValue()) {
+            Map.Entry m = (Map.Entry)it.next();
+            if((Boolean)m.getValue() &!a.containsKey((AID)m.getKey())) {
                 caminosOptimos++;
             }
         }

@@ -2,24 +2,39 @@ package trabajo.parte2.agente;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.ContainerID;
+import jade.imtp.leap.JICP.JICPAddress;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import trabajo.parte2.comportamiento.RecibeConsultaComportamiento;
 import trabajo.parte2.comportamiento.RecibeMovimientoComportamiento;
+import trabajo.parte2.dominio.Config;
 import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Posicion;
 import trabajo.parte2.dominio.Tablero;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.util.HashMap;
 
 public class GestorTablero extends Agent {
     private Tablero tablero;
     private int numColisiones;
+    private Config config;
 
     @Override
     public void setup() {
-        tablero = crearTableroAleatorio(10, 10, 10, 10, 10);
+        try {
+            config = new Config("config.txt");
+        }catch(IOException e){
+            System.err.println("Error al leer el fichero, configuración manual");
+            config = new Config();
+        }
+        tablero = crearTableroAleatorio(config.getFilas(), config.getColumnas(), config.getMuros(),
+                config.getPersonas(), config.getTaxis());
         numColisiones = 0;
         System.out.println(tablero + "\n" + "\n");
         addBehaviour(new RecibeConsultaComportamiento(this));
@@ -76,10 +91,15 @@ public class GestorTablero extends Agent {
             c = numeroAleatorio(numColumnas);
             if(t.getCasilla(f,c).getE() == Estado.LIBRE) {
                 t.setCasilla(f, c, Estado.COCHE, 0);
-                Object[] argumentos = new Object[3];
+                Object[] argumentos = new Object[4];
                 argumentos[0] = f;
                 argumentos[1] = c;
                 argumentos[2] = this.getAID();
+
+                Object[] keysMaquinas = this.config.getMaquinas().keySet().toArray();
+                String keyMaquina = (String)keysMaquinas[numTaxis%keysMaquinas.length];
+                argumentos[3] = new ContainerID(keyMaquina,this.config.getMaquinas().get(keyMaquina));
+
                 try {
                     ac = cc.createNewAgent("Taxi" + String.valueOf(numTaxis), "trabajo.parte2.agente.Taxi", argumentos);
                     t.moverTaxi(new AID(ac.getName(), true), new Posicion((int) argumentos[0], (int) argumentos[1]));

@@ -2,6 +2,8 @@ package trabajo.parte2.agente;
 
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.ContainerID;
+import jade.imtp.leap.JICP.JICPAddress;
 import trabajo.parte2.comportamiento.TaxiComportamiento;
 
 public class Taxi extends Agent {
@@ -15,6 +17,7 @@ public class Taxi extends Agent {
             fila = (int)parametros[0];
             columna = (int)parametros[1];
             gestorTablero = (AID)parametros[2];
+            doMove((ContainerID)parametros[3]);
             addBehaviour(new TaxiComportamiento());
         }
         catch(IndexOutOfBoundsException | ClassCastException e) {

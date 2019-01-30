@@ -1,0 +1,16 @@
+#Un Container de JADE por linea de la forma:
+#Nombre:ip:puerto
+Main-Container:192.168.1.33:1099
+secundario:192.168.1.30:10999
+#Linea en blanco
+
+#Filas
+10
+#Columnas
+10
+#Muros
+10
+#Personas
+10
+#Taxis
+10

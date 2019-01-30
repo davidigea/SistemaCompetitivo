@@ -34,6 +34,7 @@ public class RecibeMovimientoComportamiento extends AchieveREResponder {
             StringTokenizer st = new StringTokenizer(request.getContent());
             int fila = Integer.parseInt(st.nextToken());
             int columna = Integer.parseInt(st.nextToken());
+            boolean sigueEnOptimo = Boolean.parseBoolean(st.nextToken());
             AID taxi = request.getSender();
             Posicion nuevaPosicion = new Posicion(fila,columna);
 
@@ -52,11 +53,13 @@ public class RecibeMovimientoComportamiento extends AchieveREResponder {
                         ((GestorTablero) myAgent).moverTaxi(taxi, nuevaPosicion);
                         ((GestorTablero) myAgent).getTablero().setCasilla(fila, columna, Estado.MURO);
                         ((GestorTablero) myAgent).getTablero().borrarTaxi(taxi);
+                        ((GestorTablero) myAgent).getTablero().setTaxiEnOptimo(taxi, sigueEnOptimo);
                         inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                         break;
                     case LIBRE:
                         // actualizar casilla en tablero
                         ((GestorTablero) myAgent).moverTaxi(taxi, nuevaPosicion);
+                        ((GestorTablero) myAgent).getTablero().setTaxiEnOptimo(taxi, sigueEnOptimo);
                         inform.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                         break;
                     default:

@@ -14,11 +14,12 @@ import trabajo.parte2.dominio.Estado;
 import trabajo.parte2.dominio.Posicion;
 import trabajo.parte2.dominio.Tablero;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class GestorTablero extends Agent {
     private Tablero tablero;
@@ -43,7 +44,17 @@ public class GestorTablero extends Agent {
 
     @Override
     public void takeDown() {
-        System.out.println(numColisiones);
+        HashMap<AID, Boolean> h  = tablero.getSigueEnOptimo();
+        HashMap<AID, Posicion> a  = tablero.getTaxis();
+        Iterator it = h.entrySet().iterator();
+        int caminosOptimos = 0;
+        while(it.hasNext()) {
+            Map.Entry m = (Map.Entry)it.next();
+            if((Boolean)m.getValue() &!a.containsKey((AID)m.getKey())) {
+                caminosOptimos++;
+            }
+        }
+        System.out.println(numColisiones+"," + ((double) caminosOptimos)/h.size());
     }
 
     public Tablero getTablero(){return tablero;}

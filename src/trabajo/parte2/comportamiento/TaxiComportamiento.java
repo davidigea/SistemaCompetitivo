@@ -15,15 +15,18 @@ import trabajo.parte2.dominio.Tablero;
 public class TaxiComportamiento extends Behaviour {
     // Variables
     private static final double PENALIZACION_POR_PASO = -0.02;
-    private static final double VALOR_PERSONA = 10.0;
+    private static final double VALOR_PERSONA = 100.0;
     private static final double VALOR_MURO_COCHE = -1.0;
     private static final double GAMMA = 0.9;
     private static final int NUM_ITERACIONES = 1000;
     private boolean seguirBuscandoPasajero;
+    private boolean primeraIteracion;
+    private int pasosMinimos;
 
     public TaxiComportamiento() {
         super();
         seguirBuscandoPasajero = true;
+        primeraIteracion = true;
     }
 
     // Se encarga de enviar los mensajes de petición de las casillas adyacentes
@@ -41,12 +44,21 @@ public class TaxiComportamiento extends Behaviour {
         double[][] U = funcionUtilidad(t, filaActual, columnaActual);
         int sentidoMax = movimiento(U, filaActual, columnaActual);
 
+        // Calculamos camino óptimo la primera vez
+        if(primeraIteracion) {
+            primeraIteracion = false;
+            pasosMinimos = calcularCaminoMinimo(U, filaActual, columnaActual);
+        }
+
         // Solo nos movemos si es mejor que quedarse quieto
         if(sentidoMax >=0) {
-            if(solicitarMoverse(filas[sentidoMax],columnas[sentidoMax])
-                    && U[filas[sentidoMax]][columnas[sentidoMax]] == VALOR_PERSONA) {
-                // Paramos si hemos llegado a un pasajero
-                seguirBuscandoPasajero = false;
+            Estado e = t.getCasilla(filas[sentidoMax], columnas[sentidoMax]).getE();
+            if(solicitarMoverse(filas[sentidoMax],columnas[sentidoMax],pasosMinimos>0)) {
+                pasosMinimos--;
+                if(e == Estado.PERSONA) {
+                    // Paramos si hemos llegado a un pasajero
+                    seguirBuscandoPasajero = false;
+                }
             }
         }
     }
@@ -56,8 +68,7 @@ public class TaxiComportamiento extends Behaviour {
         // Variables necesarias
         double[][] U = new double[t.getNumFilas()][t.getNumColumnas()];
         double[][] R = new double[t.getNumFilas()][t.getNumColumnas()];
-        double probabilidadColision = new Double(t.getTaxis().size()-1)/
-                new Double(t.getNumColumnas()*t.getNumFilas());
+        double probabilidadColision = ((double) t.getTaxis().size()-1)/(t.getNumFilas()*t.getNumFilas());
 
         // Rellenamos los valores iniciales de U y R
         for(int i=0; i<t.getNumFilas(); i++) {
@@ -160,6 +171,24 @@ public class TaxiComportamiento extends Behaviour {
         }
     }
 
+    // Devuelve los pasos hasta el pasajero más cercano
+    private int calcularCaminoMinimo(double[][] U, int fila, int columna) {
+        if(U[fila][columna] == VALOR_PERSONA) {
+            return 0;
+        }
+        else {
+            int value = movimiento(U, fila, columna);
+            if(value == -1) {
+                return -1;
+            }
+            else {
+                int[] filas = { Math.abs(fila-1), fila, fila+1, fila };
+                int[] columnas = { columna, columna+1, columna, Math.abs(columna-1) };
+                return 1+calcularCaminoMinimo(U, filas[value], columnas[value]);
+            }
+        }
+    }
+
     // Pide el tablero al GestorTablero
     private Tablero pedirTablero() {
         // Enviamos el mensaje al GestorTablero
@@ -187,12 +216,12 @@ public class TaxiComportamiento extends Behaviour {
 
     // Solicita realizar un movimiento al GestorTablero
     // Devuelve true si se permite el movimiento, y false si no
-    private boolean solicitarMoverse(int fila, int columna){
+    private boolean solicitarMoverse(int fila, int columna, boolean pasosNoSuperados){
         // Enviamos el mensaje al GestorTablero
         ACLMessage m = new ACLMessage(ACLMessage.PROPOSE);
         m.setProtocol(FIPANames.InteractionProtocol.FIPA_PROPOSE);
         m.addReceiver(((Taxi)this.myAgent).getGestorTablero());
-        m.setContent(String.valueOf(fila) + "\n" + String.valueOf(columna));
+        m.setContent(fila + "\n" + columna + "\n" + pasosNoSuperados);
         this.myAgent.send(m);
         m = this.myAgent.blockingReceive(MessageTemplate.MatchProtocol(
                 FIPANames.InteractionProtocol.FIPA_PROPOSE));

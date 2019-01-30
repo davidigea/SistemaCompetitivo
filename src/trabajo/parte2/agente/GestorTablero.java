@@ -12,6 +12,9 @@ import trabajo.parte2.dominio.Posicion;
 import trabajo.parte2.dominio.Tablero;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class GestorTablero extends Agent {
     private Tablero tablero;
@@ -19,7 +22,7 @@ public class GestorTablero extends Agent {
 
     @Override
     public void setup() {
-        tablero = crearTableroAleatorio(10, 10, 10, 10, 10);
+        tablero = crearTableroAleatorio(32, 32, 110, 110, 110);
         numColisiones = 0;
         System.out.println(tablero + "\n" + "\n");
         addBehaviour(new RecibeConsultaComportamiento(this));
@@ -28,7 +31,15 @@ public class GestorTablero extends Agent {
 
     @Override
     public void takeDown() {
-        System.out.println(numColisiones);
+        HashMap<AID, Boolean> h  = tablero.getSigueEnOptimo();
+        Iterator it = h.entrySet().iterator();
+        int caminosOptimos = 0;
+        while(it.hasNext()) {
+            if((Boolean)((Map.Entry)it.next()).getValue()) {
+                caminosOptimos++;
+            }
+        }
+        System.out.println(numColisiones+"," + ((double) caminosOptimos)/h.size());
     }
 
     public Tablero getTablero(){return tablero;}
@@ -81,7 +92,7 @@ public class GestorTablero extends Agent {
                 argumentos[1] = c;
                 argumentos[2] = this.getAID();
                 try {
-                    ac = cc.createNewAgent("Taxi" + String.valueOf(numTaxis), "trabajo.parte2.agente.Taxi", argumentos);
+                    ac = cc.createNewAgent("Taxi" + numTaxis, "trabajo.parte2.agente.Taxi", argumentos);
                     t.moverTaxi(new AID(ac.getName(), true), new Posicion((int) argumentos[0], (int) argumentos[1]));
                     ac.start();
                 }

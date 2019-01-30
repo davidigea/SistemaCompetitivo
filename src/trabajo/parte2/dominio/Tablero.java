@@ -12,9 +12,10 @@ import java.util.Objects;
  */
 public class Tablero implements Serializable {
     // Variables de la clase
-    private Casilla casillas[][];
+    private Casilla[][] casillas;
     private HashMap<AID,Posicion> taxis;
-    int numFilas, numColumnas;
+    private HashMap<AID,Boolean> sigueEnOptimo;
+    private int numFilas, numColumnas;
     private static final long serialVersionUID = 42L;
 
 
@@ -22,6 +23,7 @@ public class Tablero implements Serializable {
     public Tablero(int n, int m) {
         taxis = new HashMap<>();
         casillas = new Casilla[n][m];
+        sigueEnOptimo = new HashMap<>();
         for(int i=0; i<n; i++) {
             for(int j=0; j<m; j++) {
                 casillas[i][j] = new Casilla(Estado.LIBRE, 0, i, j);
@@ -61,6 +63,9 @@ public class Tablero implements Serializable {
         return taxis;
     }
 
+    // Obtener caminos optimos
+    public HashMap<AID, Boolean> getSigueEnOptimo() { return sigueEnOptimo; }
+
     // Establecer posicion de un taxi
     public void moverTaxi(AID taxi, Posicion posicion) {
         // Si el taxi ya estaba en el tablero, dejar posición vacía
@@ -72,6 +77,11 @@ public class Tablero implements Serializable {
         int numCochesPasados = casillas[posicion.getFila()][posicion.getColumna()].getNumCochesPasados();
         casillas[posicion.getFila()][posicion.getColumna()].setNumCochesPasados(numCochesPasados+1);
         casillas[posicion.getFila()][posicion.getColumna()].setE(Estado.COCHE);
+    }
+
+    // Actualizar si un taxi sigue en optimo
+    public void setTaxiEnOptimo(AID t, Boolean b) {
+        sigueEnOptimo.put(t,b);
     }
 
     public void borrarTaxi(AID t) {

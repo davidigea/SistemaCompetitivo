@@ -1,7 +1,6 @@
-#Un Container de JADE por linea de la forma:
+#Un Container de JADE por linea de la forma: Poner tantos containers como se desee
 #Nombre:ip:puerto
-Main-Container:192.168.1.33:1099
-secundario:192.168.1.30:10999
+Main-Container:localhost:1099
 #Linea en blanco
 
 #Filas
